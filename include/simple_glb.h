@@ -3,12 +3,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 typedef struct
 {
-    uint32 magic;       /**<equals 0x46546C67. It is ASCII string glTF*/
-    uint32 version;     /**<indicates the version of the Binary glTF container format.*/
-    uint32 length;      /**<is the total length of the Binary glTF, including Header and all Chunks, in bytes.*/
+    int32_t magic;       /**<equals 0x46546C67. It is ASCII string glTF*/
+    int32_t version;     /**<indicates the version of the Binary glTF container format.*/
+    int32_t length;      /**<is the total length of the Binary glTF, including Header and all Chunks, in bytes.*/
 }GLB_Header;
 
 typedef struct
@@ -30,4 +31,6 @@ GLB_File *simple_glb_load(char * filepath);
  * @param glbFFile the glb data to free
  */
 void simple_glb_free(GLB_File *glbFile);
-#define
+
+
+#endif
