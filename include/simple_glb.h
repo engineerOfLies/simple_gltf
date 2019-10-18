@@ -7,16 +7,32 @@
 
 typedef struct
 {
-    int32_t magic;       /**<equals 0x46546C67. It is ASCII string glTF*/
-    int32_t version;     /**<indicates the version of the Binary glTF container format.*/
-    int32_t length;      /**<is the total length of the Binary glTF, including Header and all Chunks, in bytes.*/
+    uint32_t magic;       /**<equals 0x46546C67. It is ASCII string glTF*/
+    uint32_t version;     /**<indicates the version of the Binary glTF container format.*/
+    uint32_t length;      /**<is the total length of the Binary glTF, including Header and all Chunks, in bytes.*/
 }GLB_Header;
+
+typedef enum
+{
+    GLB_CT_JSON = 0x4E4F534A,
+    GLB_CT_BIN = 0x004E4942
+}GLB_ChunkTypes;
 
 typedef struct
 {
-    GLB_Header header;  /**<file header for GLB file*/
-    char * buffer;      /**<data blob for the GLB file*/
+    uint32_t chunkLength;   /**<is the length of chunkData, in bytes.*/
+    uint32_t chunkType;     /**<indicates the type of chunk. one of GLB_ChunkTypes*/
+    char    *chunkData;     /**<is a binary payload of chunk*/
+}GLB_Chunk;
+
+typedef struct
+{
+    GLB_Header header;      /**<file header for GLB file*/
+    char * buffer;          /**<data blob for the GLB file*/
+    GLB_Chunk *chunkList;   /**<list of chunks in the buffer*/
 }GLB_File;
+
+
 
 /**
  * @brief load a GLB file from disk
