@@ -10,22 +10,23 @@
 #
 
 # Linux
-PROJECT = sgltf
+PROJECT = sgltf_test
 CC      = gcc
 #CC      = clang
+
+OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
 
 LIB_PATH = ../libs
 LIB_PATHS = ../simple_json/libs ../simple_logger/libs
 LIB_PARAMS =$(foreach d, $(LIB_PATHS), -L$d)
 LIB_LIST = ../simple_json/libs/libsj.a ../simple_logger/libs/libsl.a
+STATIC_LIBS = libsgltf.a
+LDFLAGS = -L$(LIB_PATH) $(foreach d, $(STATIC_LIBS),$(LIB_PATH)/$d)
 
-OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
-
-INC_PATHS = ../include ../simple_json/include ../simple_logger/include
+INC_PATHS = ../include ../libs/include 
 INC_PARAMS =$(foreach d, $(INC_PATHS), -I$d)
 
-LDFLAGS = -lz -lm
-LFLAGS = -g  -shared -Wl,-soname,lib$(PROJECT).so.1 -o $(LIB_PATH)/lib$(PROJECT).so.1 
+LFLAGS = -g  -o ../$(PROJECT) -lm
 CFLAGS = -g  -fPIC -Wall -pedantic -std=gnu99 -fgnu89-inline -Wno-unknown-pragmas -Wno-variadic-macros
 # -fgnu89-inline 
 # -std=gnu99 
@@ -41,7 +42,7 @@ $(PROJECT): $(OBJECTS)
 	$(CC) $(OBJECTS) $(LFLAGS) $(LDFLAGS) $(LIB_LIST)
 
 docs:
-	$(DOXYGEN) doxygen.cfg
+	$(DOXYGEN) ../docs/Doxyfile
 
 sources:
 	echo (patsubst %.c,%.o,$(wildcard *.c)) > makefile.sources
@@ -57,13 +58,13 @@ depend:
 	@echo Done.
 
 clean:
-	rm *.o
-
-static:
-	ar rcs $(LIB_PATH)/lib$(PROJECT).a $(OBJECTS)
+	rm *.o $(LIB_PATH)/lib$(PROJECT).a
 
 count:
 	wc -l *.c $(foreach d, $(INC_PATHS), $d/*.h) makefile
+
+static:
+	ar rcs $(LIB_PATH)/lib$(PROJECT).a $(OBJECTS)
 
 #
 # Dependencies.
