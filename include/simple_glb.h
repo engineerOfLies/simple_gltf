@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "simple_json.h"
+
 typedef struct
 {
     uint32_t magic;       /**<equals 0x46546C67. It is ASCII string glTF*/
@@ -16,12 +18,12 @@ typedef enum
 {
     GLB_CT_JSON = 0x4E4F534A,
     GLB_CT_BIN = 0x004E4942
-}GLB_ChunkTypes;
+}GLB_ChunkType;
 
 typedef struct
 {
     uint32_t chunkLength;   /**<is the length of chunkData, in bytes.*/
-    uint32_t chunkType;     /**<indicates the type of chunk. one of GLB_ChunkTypes*/
+    uint32_t chunkType;     /**<indicates the type of chunk. one of GLB_ChunkType*/
     char    *chunkData;     /**<is a binary payload of chunk*/
 }GLB_Chunk;
 
@@ -30,9 +32,17 @@ typedef struct
     GLB_Header header;      /**<file header for GLB file*/
     char * buffer;          /**<data blob for the GLB file*/
     GLB_Chunk *chunkList;   /**<list of chunks in the buffer*/
+    uint32_t   chunkCount;  /**<how many chunks are in the list*/
 }GLB_File;
 
 
+/**
+ * @brief given a glbFile, parse the json out of it
+ * @param glbFile the file to parse
+ * @return NULL on error, or a SJson object
+ * @note: returned object must be freed with sj_free()
+ */
+SJson *simple_glb_get_json(GLB_File *glbFile);
 
 /**
  * @brief load a GLB file from disk

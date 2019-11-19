@@ -1,7 +1,11 @@
 #include <string.h>
+
 #include "simple_logger.h"
-#include "simple_glb.h"
+#include "simple_json.h"
 #include "simple_json_list.h"
+#include "simple_json_parse.h"
+
+#include "simple_glb.h"
 
 GLB_File *simple_glb_new()
 {
@@ -18,18 +22,55 @@ GLB_File *simple_glb_new()
 
 uint32_t simple_glb_get_chunk_length(GLB_Chunk *chunk)
 {
+    uint32_t size = 0;
     if (!chunk)
     {
         slog("no chunk provided");
         return 0;
     }
-    return (sizeof(uint32_t) * 2)+chunk->chunkLength;
+    size = (sizeof(uint32_t) * 2)+chunk->chunkLength;
+    slog("chunk is size %i",size);
+    return size;
 }
 
-uint32_t simple_glb_parse_chunk(GLB_File *glb,GLB_Chunk *chunk)
+GLB_Chunk *simple_glb_get_chunk_by_type(GLB_File *glbFile,GLB_ChunkType type)
 {
-    if (!glb)return 0;
-    return 0;
+    int i;
+    if (!glbFile)return NULL;
+    for (i = 0; i < glbFile->chunkCount; i++)
+    {
+        if (glbFile->chunkList[i].chunkType == type)
+        {
+            return &glbFile->chunkList[i];
+        }
+    }
+    return NULL;
+}
+
+SJson *simple_glb_get_json(GLB_File *glbFile)
+{
+    SJson *json = NULL;
+    GLB_Chunk *chunk = NULL;
+    if (!glbFile)
+    {
+        slog("no glbFile provided");
+        return NULL;
+    }
+    chunk = simple_glb_get_chunk_by_type(glbFile,GLB_CT_JSON);
+    if (!chunk)
+    {
+        slog("no JSON chunk in GLB, bad file");
+        return NULL;
+    }
+    slog("attempting to parse json data from chunk. length %i",chunk->chunkLength);
+//    slog("json text loaded:%s\n",chunk->chunkData);
+    json = sj_parse_buffer(chunk->chunkData,chunk->chunkLength);
+    if (!json)
+    {
+        slog("json data from glb file failed to parse");
+        return NULL;
+    }
+    return json;
 }
 
 void simple_glb_parse(GLB_File *glb)
@@ -45,6 +86,7 @@ void simple_glb_parse(GLB_File *glb)
         index += simple_glb_get_chunk_length(chunk);
         chunkCount++;
     }
+    slog("chunkCount: %i",chunkCount);
     glb->chunkList = (GLB_Chunk*)malloc(sizeof(GLB_Chunk)*chunkCount);
     if (!glb->chunkList)
     {
@@ -58,12 +100,25 @@ void simple_glb_parse(GLB_File *glb)
     {
         chunk = (GLB_Chunk *)&glb->buffer[index];
         
-        glb->chunkList[chunkIndex].chunkLength = chunk->chunkLength;
+        glb->chunkList[chunkIndex].chunkLength = chunk->chunkLength - 4;
         glb->chunkList[chunkIndex].chunkType = chunk->chunkType;
         glb->chunkList[chunkIndex].chunkData = (char *)&chunk->chunkData;
-        
+        switch (chunk->chunkType)
+        {
+            case GLB_CT_JSON:
+                slog("chunk %i is JSON",chunkIndex);
+                
+                break;
+            case GLB_CT_BIN:
+                slog("chunk %i is BINary",chunkIndex);
+                break;
+            default:
+                slog("chunk %i is unknown: 0x%x",chunkIndex,chunk->chunkType);
+        }
+        chunkIndex++;
         index += simple_glb_get_chunk_length(chunk);
     }
+    glb->chunkCount = chunkCount;
     slog("parsed %i chunks out of glb file",chunkCount);
 }
 
@@ -113,6 +168,11 @@ void simple_glb_free(GLB_File *glbFile)
     {
         slog("no glbFile handle provided");
         return;
+    }
+    if (glbFile->chunkList)
+    {
+        free(glbFile->chunkList);
+        glbFile->chunkList = NULL;
     }
     if (glbFile->buffer)
     {

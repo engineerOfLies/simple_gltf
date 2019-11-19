@@ -23,7 +23,7 @@ LIB_LIST = ../simple_json/libs/libsj.a ../simple_logger/libs/libsl.a
 STATIC_LIBS = libsgltf.a
 LDFLAGS = -L$(LIB_PATH) $(foreach d, $(STATIC_LIBS),$(LIB_PATH)/$d)
 
-INC_PATHS = ../include ../libs/include 
+INC_PATHS = ../include ../libs/include ../simple_json/include
 INC_PARAMS =$(foreach d, $(INC_PATHS), -I$d)
 
 LFLAGS = -g  -o ../$(PROJECT) -lm
